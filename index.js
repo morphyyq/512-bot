@@ -19,7 +19,7 @@ if (!token) {
 }
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds],
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
 });
 
 const commands = [
@@ -127,6 +127,40 @@ client.once('ready', async () => {
     await registerCommands();
   } catch (error) {
     console.error('Ошибка регистрации slash-команд:', error);
+  }
+});
+
+client.on('guildMemberAdd', async (member) => {
+  const roleId = '1525615883525951538';
+
+  // Если указан GUILD_ID, работаем только на нужном сервере.
+  if (guildId && member.guild.id !== guildId) return;
+  // Ботам роль не выдаём.
+  if (member.user.bot) return;
+
+  const role = member.guild.roles.cache.get(roleId);
+  const botMember = member.guild.members.me;
+
+  if (!role) {
+    console.error(`Роль ${roleId} не найдена на сервере ${member.guild.name}`);
+    return;
+  }
+
+  if (!botMember || !botMember.permissions.has(PermissionFlagsBits.ManageRoles)) {
+    console.error('У бота нет права Управлять ролями');
+    return;
+  }
+
+  if (role.managed || role.position >= botMember.roles.highest.position) {
+    console.error('Роль нельзя выдать: роль бота должна находиться выше этой роли');
+    return;
+  }
+
+  try {
+    await member.roles.add(role, 'Автоматическая роль новому участнику');
+    console.log(`Роль ${role.name} выдана пользователю ${member.user.tag}`);
+  } catch (error) {
+    console.error(`Не удалось выдать роль пользователю ${member.user.tag}:`, error);
   }
 });
 
