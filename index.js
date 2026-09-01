@@ -243,7 +243,7 @@ client.on('interactionCreate', async (interaction) => {
       return;
     }
 
-    if (!/^\\d+$/.test(value)) {
+    if (!/^\d+$/.test(value)) {
       await interaction.reply({
         content: 'Укажи число от 1 до 1000 или `all`.',
         ephemeral: true,
