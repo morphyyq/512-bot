@@ -177,10 +177,23 @@ client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
   if (!photoOnlyChannelIds.has(message.channel.id)) return;
 
-  const hasImage = message.attachments.some((attachment) => {
-    if (attachment.contentType?.startsWith('image/')) return true;
-    return /\.(png|jpe?g|gif|webp|bmp|heic)$/i.test(attachment.name || attachment.url);
+  const imageExtension = /\.(png|jpe?g|gif|webp|bmp|heic|avif)(?:$|[?#])/i;
+  const hasImageAttachment = [...message.attachments.values()].some((attachment) => {
+    const contentType = (attachment.contentType || '').toLowerCase();
+    const fileName = attachment.name || '';
+    const url = attachment.url || '';
+
+    return (
+      contentType.startsWith('image/') ||
+      (attachment.width > 0 && attachment.height > 0) ||
+      imageExtension.test(fileName) ||
+      imageExtension.test(url)
+    );
   });
+  const hasImageEmbed = message.embeds.some(
+    (embed) => Boolean(embed.image || embed.thumbnail)
+  );
+  const hasImage = hasImageAttachment || hasImageEmbed;
 
   // В этих каналах разрешены только сообщения с изображениями.
   if (hasImage) return;
