@@ -19,7 +19,11 @@ if (!token) {
 }
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildMessages,
+  ],
 });
 
 const commands = [
@@ -161,6 +165,31 @@ client.on('guildMemberAdd', async (member) => {
     console.log(`Роль ${role.name} выдана пользователю ${member.user.tag}`);
   } catch (error) {
     console.error(`Не удалось выдать роль пользователю ${member.user.tag}:`, error);
+  }
+});
+
+const photoOnlyChannelIds = new Set([
+  '1525590497542930542',
+  '1525594630257639474',
+]);
+
+client.on('messageCreate', async (message) => {
+  if (message.author.bot) return;
+  if (!photoOnlyChannelIds.has(message.channel.id)) return;
+
+  const hasImage = message.attachments.some((attachment) => {
+    if (attachment.contentType?.startsWith('image/')) return true;
+    return /\.(png|jpe?g|gif|webp|bmp|heic)$/i.test(attachment.name || attachment.url);
+  });
+
+  // В этих каналах разрешены только сообщения с изображениями.
+  if (hasImage) return;
+
+  try {
+    await message.delete();
+    console.log(`Удалено текстовое сообщение в фотоканале: ${message.author.tag}`);
+  } catch (error) {
+    console.error('Не удалось удалить сообщение в фотоканале:', error.message);
   }
 });
 
