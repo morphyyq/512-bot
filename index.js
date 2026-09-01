@@ -177,6 +177,11 @@ client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
   if (!photoOnlyChannelIds.has(message.channel.id)) return;
 
+  // Любое вложение Discord не является текстовым сообщением.
+  // Это также покрывает фотографии с телефона, у которых Discord может
+  // не передать contentType или расширение файла.
+  if (message.attachments.size > 0) return;
+
   const imageExtension = /\.(png|jpe?g|gif|webp|bmp|heic|avif)(?:$|[?#])/i;
   const hasImageAttachment = [...message.attachments.values()].some((attachment) => {
     const contentType = (attachment.contentType || '').toLowerCase();
